@@ -1,0 +1,167 @@
+This problem has been bothering me for a long time！
+
+使用code first 由于不知名问题解决不掉，遂放弃
+
+学习ADO.NET，使用datareader（由于是oracle数据库，所以是oracledatareader）
+
+解决方案1（失败）：
+
+控制器代码：
+
+ #region ceshi
+        public ActionResult Details()
+        {
+            var doctors = new List<Doctor>
+            {
+                new Doctor{ doc_name = "www" },
+                 new Doctor{ doc_name = "ww33w" },
+                  new Doctor{ doc_name = "w3ww" },
+            };
+            return View(doctors);
+        }
+        #endregion
+        
+视图代码：
+
+@model IEnumerable<MvcApplication4.Models.Doctor>
+@{
+    ViewBag.Title = "Details";
+}
+
+<h2>Browse Doctors</h2>
+
+<p>select from @Model.Count() doctors:</p>
+
+<ul>
+    @foreach (var doctor in Model)
+    {
+        <li>@Html.ActionLink(doctor.doc_name,"Browse", new{ doctor = doctor.doc_name})</li>
+    }
+
+</ul>
+
+
+@{
+    ViewBag.Title = "UserInfo";
+}
+
+<h2>UserInfo</h2>
+
+失败原因： 不会使用IEnumberable!原理不明，代码不了解。改动控制器为查询得到结果后不知道如何保存成可以被IEnumberable使用的形式。
+
+
+解决方案2：
+
+控制层：
+
+ #region dep
+        public ActionResult Dep()
+        {
+            //var doctors = new List<Doctor>{
+             
+            //    new Doctor{ doc_name = "www" },
+            //     new Doctor{ doc_name = "ww33w" },
+            //      new Doctor{ doc_name = "w3ww" },
+            //};
+            var id = "3";
+            var re = "";
+            //Doctor doctor = new Doctor();
+            //string doc_name="";
+            OracleConnection conn = new OracleConnection(ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString);//进行连接
+            conn.Open();//打开指定的连接         
+            string sel = "select ID,DOC_NAME,DEP_ID from DOCTOR_STATUS where DEP_ID ='" + id + "'";
+
+            OracleDataAdapter adapter = new OracleDataAdapter(sel, conn);
+            DataSet doctor = new DataSet();
+            adapter.Fill(doctor, "Doctor");
+
+
+
+
+
+           OracleCommand command1 = new OracleCommand(sel, conn);
+           OracleDataReader reader = command1.ExecuteReader();
+
+           List<Doctor> d1 = new List<Doctor>();
+
+           while (reader.Read())
+           {
+               Doctor d0 = new Doctor();
+
+               d0.id =reader["ID"].ToString();
+               d0.doc_name = reader["DOC_NAME"].ToString();
+               d0.dept_id = reader["DEP_ID"].ToString();
+
+               d1.Add(d0);
+
+           }
+           
+
+
+
+
+            //if (reader.HasRows)
+            //{
+            //    do
+            //    {
+            //        reader.Read();  
+            //        //re = reader["DOC_NAME"].ToString();
+            //        //doctor.doc_name = re;
+            //        //doctor.dept_id = reader["DEP_ID"].ToString();
+            //        //doctor.id = reader["ID"].ToString();
+
+            //        for (var i = 0; i < reader.FieldCount; i++)
+            //        {
+            //            doctors[i].id = reader.GetString(0);
+                    
+            //            //doctors[i].doc_name = reader.GetString(i);
+                       
+            //            //doctors[i].dept_id = reader.GetString(i);
+ 
+            //        }
+
+
+            //    }
+            //    while (reader.NextResult());
+            //}
+            //reader.Close();
+            //ViewData["Doctor"] = doctor;
+            
+            return View(d1);
+        }
+        #endregion
+        
+        
+视图层：
+
+
+@using MvcApplication4.Models;
+
+@{
+    ViewBag.Title = "Dep";
+}
+@{
+    var doctor = ViewData["Doctor"] as Doctor;
+    }
+
+<h2>Dep</h2>
+
+ <ul>
+     @foreach (MvcApplication4.Models.Doctor d in Model) 
+ 
+     {
+     <li>@d.id</li>
+
+
+     <td> @d.dept_id </td>
+
+
+     <td> @d.doc_name </td>
+
+     }
+     </ul>
+     
+查询到多个内容，均可显示在网页上，完成需要的功能。
+历时8天……本来想继续看视频学习，莫名其妙的完成了。
+
+
